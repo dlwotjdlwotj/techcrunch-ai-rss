@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ article.title }} - TechCrunch AI 요약</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1><a href="{{ url_for('index') }}">🤖 TechCrunch AI 뉴스 요약</a></h1>
+        </div>
+    </header>
+
+    <main class="container">
+        <article class="article-detail">
+            <h2>{{ article.title }}</h2>
+            <div class="article-meta">
+                <span class="date">📅 {{ article.published }}</span>
+                <a href="{{ article.link }}" target="_blank" rel="noopener" class="source-link">원문 보기 (TechCrunch)</a>
+            </div>
+            
+            {% if article.summary_ko %}
+                <div class="summary">
+                    <h3>한국어 요약</h3>
+                    <p>{{ article.summary_ko }}</p>
+                </div>
+            {% endif %}
+            
+            {% if article.summary %}
+                <div class="original-summary">
+                    <h3>원문 요약 (영어)</h3>
+                    <p>{{ article.summary }}</p>
+                </div>
+            {% endif %}
+            
+            <div class="article-actions">
+                <a href="{{ article.link }}" target="_blank" rel="noopener" class="btn-primary">TechCrunch에서 전체 기사 읽기</a>
+                <a href="{{ url_for('index') }}" class="btn-secondary">목록으로 돌아가기</a>
+            </div>
+        </article>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>데이터 출처: <a href="https://techcrunch.com/category/artificial-intelligence/" target="_blank" rel="noopener">TechCrunch AI</a></p>
+            <p>요약: Google Gemini API</p>
+        </div>
+    </footer>
+</body>
+</html>

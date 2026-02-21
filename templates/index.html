@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TechCrunch AI 요약 블로그</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>🤖 TechCrunch AI 뉴스 요약</h1>
+            <p class="subtitle">최신 AI 기술 소식을 한국어로 간단히 요약합니다</p>
+        </div>
+    </header>
+
+    <main class="container">
+        {% if articles %}
+            <div class="articles-grid">
+                {% for article in articles %}
+                <article class="article-card">
+                    <h2><a href="{{ article.link }}" target="_blank" rel="noopener">{{ article.title }}</a></h2>
+                    <div class="article-meta">
+                        <span class="date">📅 {{ article.published }}</span>
+                        <a href="{{ article.link }}" target="_blank" rel="noopener" class="source-link">원문 보기 (TechCrunch)</a>
+                    </div>
+                    {% if article.summary_ko %}
+                        <div class="summary">
+                            <p>{{ article.summary_ko }}</p>
+                        </div>
+                    {% elif article.summary %}
+                        <div class="summary">
+                            <p>{{ article.summary[:200] }}...</p>
+                        </div>
+                    {% endif %}
+                </article>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="empty-state">
+                <p>📭 아직 수집된 기사가 없습니다.</p>
+                <p>먼저 <code>python run_with_summary.py</code>를 실행해서 기사를 수집하고 요약하세요.</p>
+            </div>
+        {% endif %}
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>데이터 출처: <a href="https://techcrunch.com/category/artificial-intelligence/" target="_blank" rel="noopener">TechCrunch AI</a></p>
+            <p>요약: Google Gemini API</p>
+        </div>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,12 @@
+[Unit]
+Description=TechCrunch AI RSS Daily Update Timer
+Requires=techcrunch-update.service
+
+[Timer]
+# 매일 오전 9시에 실행
+OnCalendar=*-*-* 09:00:00
+# 서버 재부팅 후에도 실행되도록
+Persistent=true
+
+[Install]
+WantedBy=timers.target
