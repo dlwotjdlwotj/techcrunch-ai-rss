@@ -3,9 +3,11 @@ TechCrunch AI 요약 블로그 웹 서버 (Flask)
 """
 import json
 import os
+import subprocess
+import sys
 from pathlib import Path
 
-from flask import Flask, render_template
+from flask import Flask, render_template, request
 
 from config import OUTPUT_DIR, SUMMARIZED_JSON
 
@@ -42,6 +44,30 @@ def article_detail(article_id):
         article = articles[article_id]
         return render_template("article.html", article=article, article_id=article_id)
     return "기사를 찾을 수 없습니다.", 404
+
+
+@app.route("/api/trigger-update", methods=["GET", "POST"])
+def trigger_update():
+    """
+    외부 cron에서 호출해 RSS 수집·요약을 실행합니다.
+    매일 00:00 KST에 호출하려면 cron-job.org 등에서 설정하세요.
+    """
+    secret = os.environ.get("CRON_SECRET")
+    if not secret:
+        return {"error": "CRON_SECRET not configured"}, 503
+    key = request.args.get("key") or request.headers.get("X-Cron-Key")
+    if key != secret:
+        return {"error": "Unauthorized"}, 401
+
+    root = Path(__file__).resolve().parent
+    subprocess.Popen(
+        [sys.executable, str(root / "scheduled_update.py")],
+        cwd=str(root),
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        start_new_session=True,
+    )
+    return {"status": "started", "message": "RSS 수집 및 요약을 백그라운드에서 실행 중입니다."}, 202
 
 
 if __name__ == "__main__":

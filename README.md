@@ -57,6 +57,10 @@ python app.py
 
 **참고**: 웹 블로그를 보려면 먼저 `python run_with_summary.py`로 기사를 수집하고 요약해야 합니다.
 
+### Railway 배포 및 매일 자동 업데이트
+
+서버 배포·매일 자동 수집 방법은 [SERVER.md](SERVER.md)를 참고하세요. Railway + cron-job.org로 매일 00:00에 기사를 자동 업데이트할 수 있습니다.
+
 ## 다른 코드에서 사용
 
 ```python

@@ -87,7 +87,24 @@ crontab crontab.example
 tail -f logs/update.log
 ```
 
-### 방법 C: Systemd Timer 사용 (Linux systemd 시스템)
+### 방법 C: Railway/Render 등 PaaS + 외부 Cron (cron-job.org)
+
+PaaS에는 시스템 cron이 없으므로, 외부 서비스가 API를 호출해 업데이트를 트리거합니다.
+
+1. **Railway 환경 변수**에 추가:
+   - `CRON_SECRET`: 임의의 비밀 문자열 (예: `my-secret-key-123`)
+   - `GEMINI_API_KEY`: (필수) RSS 요약용
+
+2. **[cron-job.org](https://cron-job.org)** 가입 후 새 cron 작업:
+   - **URL**: `https://web-production-e8fd.up.railway.app/api/trigger-update?key=CRON_SECRET에_설정한_값`
+   - **스케줄**: 매일 00:00 (타임존: Asia/Seoul 선택)
+   - **요청 방식**: GET 또는 POST
+
+3. 저장 후 매일 자정(한국 시간)에 기사가 자동 수집·요약됩니다.
+
+> `web-production-e8fd.up.railway.app`는 실제 Railway 도메인으로 바꾸세요.
+
+### 방법 D: Systemd Timer 사용 (Linux systemd 시스템)
 
 1. 서비스 파일과 타이머 파일의 경로 수정:
    ```bash
