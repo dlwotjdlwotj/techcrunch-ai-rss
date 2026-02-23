@@ -35,13 +35,21 @@ def main():
         import os
         os.chdir(SCRIPT_DIR)
 
-    if already_updated_today():
-        print("오늘은 이미 업데이트했습니다. 건너뜁니다.")
-        return 0
+    lock_file = SCRIPT_DIR / OUTPUT_DIR / "update_in_progress.lock"
+    try:
+        if already_updated_today():
+            print("오늘은 이미 업데이트했습니다. 건너뜁니다.")
+            return 0
 
-    print("오늘 업데이트가 없습니다. RSS 수집 및 요약을 실행합니다.\n")
-    from run_with_summary import main as run_main
-    return run_main()
+        print("오늘 업데이트가 없습니다. RSS 수집 및 요약을 실행합니다.\n")
+        from run_with_summary import main as run_main
+        return run_main()
+    finally:
+        if lock_file.exists():
+            try:
+                lock_file.unlink()
+            except Exception:
+                pass
 
 
 if __name__ == "__main__":

@@ -52,7 +52,11 @@ PORT=8080 gunicorn -w 1 -b 0.0.0.0:8080 app:app
 
 RSS 수집·요약을 **서버에서 매일 자동으로** 실행하도록 설정할 수 있습니다.
 
-### 방법 A: 자동 설정 스크립트 사용 (추천)
+### 내장 스케줄러 (Railway, Render 등 PaaS)
+
+웹 서버가 실행 중이면 **매일 00:00 한국 시간(KST)**에 자동으로 업데이트됩니다. 별도의 cron-job.org 설정이 필요 없습니다. `GEMINI_API_KEY` 환경 변수만 설정하면 됩니다.
+
+### 방법 A: 자동 설정 스크립트 사용 (Linux 서버)
 
 ```bash
 cd /path/to/techcrunch-ai-rss
@@ -87,22 +91,18 @@ crontab crontab.example
 tail -f logs/update.log
 ```
 
-### 방법 C: Railway/Render 등 PaaS + 외부 Cron (cron-job.org)
+### 방법 C: 외부 Cron (cron-job.org) - 수동 트리거 또는 다른 시간대
 
-PaaS에는 시스템 cron이 없으므로, 외부 서비스가 API를 호출해 업데이트를 트리거합니다.
+내장 스케줄러(00:00 KST) 대신 다른 시간에 실행하거나, 수동으로 트리거하려면:
 
 1. **Railway 환경 변수**에 추가:
    - `CRON_SECRET`: 임의의 비밀 문자열 (예: `my-secret-key-123`)
    - `GEMINI_API_KEY`: (필수) RSS 요약용
 
 2. **[cron-job.org](https://cron-job.org)** 가입 후 새 cron 작업:
-   - **URL**: `https://web-production-e8fd.up.railway.app/api/trigger-update?key=CRON_SECRET에_설정한_값`
-   - **스케줄**: 매일 00:00 (타임존: Asia/Seoul 선택)
+   - **URL**: `https://실제도메인/api/trigger-update?key=CRON_SECRET에_설정한_값`
+   - **스케줄**: 원하는 시간 (타임존: Asia/Seoul 선택)
    - **요청 방식**: GET 또는 POST
-
-3. 저장 후 매일 자정(한국 시간)에 기사가 자동 수집·요약됩니다.
-
-> `web-production-e8fd.up.railway.app`는 실제 Railway 도메인으로 바꾸세요.
 
 ### 방법 D: Systemd Timer 사용 (Linux systemd 시스템)
 
