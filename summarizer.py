@@ -56,14 +56,24 @@ def summarize_article(article: dict, model_name: str = GEMINI_MODEL) -> str:
 {summary_clean[:4000]}
 """
 
-    fallback_models = [model_name, "gemini-2.5-flash", "gemini-2.0-flash"]
+    fallback_models = [
+        model_name,
+        "gemini-2.5-flash",
+        "gemini-2.0-flash-exp",
+        "gemini-2.0-flash",
+    ]
+    seen = set()
     last_error = None
     client = _get_client()
     for m in fallback_models:
+        if not m or m in seen:
+            continue
+        seen.add(m)
         try:
             response = client.models.generate_content(model=m, contents=prompt)
-            if response and response.text:
-                return response.text.strip()
+            text = getattr(response, "text", None) if response else None
+            if text:
+                return str(text).strip()
         except Exception as e:
             last_error = e
             continue

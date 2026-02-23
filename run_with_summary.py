@@ -47,7 +47,7 @@ def main():
         sys.exit(1)
 
     if failed_list:
-        print("\n⚠️  요약 실패: 아래 기사는 목록에 포함되지 않았습니다.")
+        print("\n[!] 요약 실패: 아래 기사는 목록에 포함되지 않았습니다.")
         for f in failed_list:
             title = f['title']
             print(f"   · {title[:60] + '...' if len(title) > 60 else title}")
