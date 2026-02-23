@@ -52,9 +52,12 @@ PORT=8080 gunicorn -w 1 -b 0.0.0.0:8080 app:app
 
 RSS 수집·요약을 **서버에서 매일 자동으로** 실행하도록 설정할 수 있습니다.
 
-### 내장 스케줄러 (Railway, Render 등 PaaS)
+### Railway/Render: cron-job.org로 매일 00:00 업데이트 (권장)
 
-웹 서버가 실행 중이면 **매일 00:00 한국 시간(KST)**에 자동으로 업데이트됩니다. 별도의 cron-job.org 설정이 필요 없습니다. `GEMINI_API_KEY` 환경 변수만 설정하면 됩니다.
+PaaS는 트래픽 없을 때 슬립할 수 있어, 내장 스케줄러가 자정에 실행되지 않을 수 있습니다. **cron-job.org**에서 매일 00:00 KST에 `/api/trigger-update`를 호출하도록 설정하면, 방문자 없이도 매일 업데이트됩니다.
+
+1. Railway 환경 변수: `GEMINI_API_KEY`, `CRON_SECRET` 설정
+2. [cron-job.org](https://cron-job.org) → 새 작업 → URL: `https://your-app.up.railway.app/api/trigger-update?key=CRON_SECRET값` → 스케줄: 매일 00:00 (Asia/Seoul)
 
 ### 방법 A: 자동 설정 스크립트 사용 (Linux 서버)
 

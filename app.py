@@ -5,8 +5,6 @@ import json
 import os
 import subprocess
 import sys
-import time
-from datetime import date
 from pathlib import Path
 
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -15,9 +13,6 @@ from flask import Flask, render_template, request
 from config import OUTPUT_DIR, SUMMARIZED_JSON
 
 app = Flask(__name__)
-
-LOCK_FILE = Path(__file__).resolve().parent / OUTPUT_DIR / "update_in_progress.lock"
-LOCK_MAX_AGE_SEC = 30 * 60  # 30분
 
 
 def _run_scheduled_update():
@@ -33,59 +28,6 @@ def _run_scheduled_update():
 _scheduler = BackgroundScheduler(timezone="Asia/Seoul")
 _scheduler.add_job(_run_scheduled_update, "cron", hour=0, minute=0)
 _scheduler.start()
-
-
-def _needs_update_today() -> bool:
-    """당일 업데이트가 안 됐고, 업데이트가 진행 중이 아닐 때 True"""
-    root = Path(__file__).resolve().parent
-    state_file = root / OUTPUT_DIR / "last_update_date.txt"
-    lock_file = root / OUTPUT_DIR / "update_in_progress.lock"
-
-    if state_file.exists():
-        try:
-            content = state_file.read_text(encoding="utf-8").strip()
-            if content == date.today().isoformat():
-                return False
-        except Exception:
-            pass
-
-    if lock_file.exists():
-        try:
-            mtime = lock_file.stat().st_mtime
-            if time.time() - mtime < LOCK_MAX_AGE_SEC:
-                return False
-        except Exception:
-            pass
-
-    return True
-
-
-def _trigger_update_if_needed():
-    """당일 업데이트가 안 됐으면 백그라운드에서 업데이트 실행"""
-    if not _needs_update_today():
-        return
-    root = Path(__file__).resolve().parent
-    lock_file = root / OUTPUT_DIR / "update_in_progress.lock"
-    log_file = root / OUTPUT_DIR / "update.log"
-    lock_file.parent.mkdir(parents=True, exist_ok=True)
-    try:
-        lock_file.touch()
-    except Exception:
-        return
-    log_handle = None
-    try:
-        log_handle = open(log_file, "a", encoding="utf-8")
-        log_handle.write(f"\n--- {date.today().isoformat()} 업데이트 시작 ---\n")
-        log_handle.flush()
-    except Exception:
-        pass
-    subprocess.Popen(
-        [sys.executable, str(root / "scheduled_update.py")],
-        cwd=str(root),
-        stdout=log_handle or subprocess.DEVNULL,
-        stderr=subprocess.STDOUT if log_handle else subprocess.DEVNULL,
-        start_new_session=True,
-    )
 
 
 def load_articles():
@@ -106,7 +48,6 @@ def load_articles():
 @app.route("/")
 def index():
     """메인 페이지: 기사 목록"""
-    _trigger_update_if_needed()
     articles = load_articles()
     return render_template("index.html", articles=articles)
 
@@ -141,7 +82,7 @@ def update_log():
 def trigger_update():
     """
     외부 cron에서 호출해 RSS 수집·요약을 실행합니다.
-    매일 00:00 KST에 호출하려면 cron-job.org 등에서 설정하세요.
+    cron-job.org에서 매일 00:00 KST에 이 URL을 호출하면 됩니다.
     """
     secret = os.environ.get("CRON_SECRET")
     if not secret:
@@ -151,11 +92,18 @@ def trigger_update():
         return {"error": "Unauthorized"}, 401
 
     root = Path(__file__).resolve().parent
+    log_file = root / OUTPUT_DIR / "update.log"
+    (root / OUTPUT_DIR).mkdir(parents=True, exist_ok=True)
+    log_handle = None
+    try:
+        log_handle = open(log_file, "a", encoding="utf-8")
+    except Exception:
+        pass
     subprocess.Popen(
         [sys.executable, str(root / "scheduled_update.py")],
         cwd=str(root),
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
+        stdout=log_handle or subprocess.DEVNULL,
+        stderr=subprocess.STDOUT if log_handle else subprocess.DEVNULL,
         start_new_session=True,
     )
     return {"status": "started", "message": "RSS 수집 및 요약을 백그라운드에서 실행 중입니다."}, 202

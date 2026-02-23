@@ -1,15 +1,17 @@
 """
 Gemini API를 사용해 기사를 한국어로 요약하는 모듈.
+google-genai 패키지 사용 (https://github.com/googleapis/python-genai)
 """
+import json
 import re
 import time
 from pathlib import Path
 
-import google.generativeai as genai
-
-import json
+from google import genai
 
 from config import GEMINI_API_KEY, GEMINI_MODEL, OUTPUT_DIR, SUMMARIZED_JSON
+
+_client = None
 
 
 def _strip_html(text: str) -> str:
@@ -21,15 +23,18 @@ def _strip_html(text: str) -> str:
     return text
 
 
-def _ensure_client() -> None:
-    """API 키가 설정되었는지 확인하고 genai를 설정합니다."""
+def _get_client():
+    """API 클라이언트를 반환합니다 (lazy 초기화)."""
+    global _client
     if not GEMINI_API_KEY:
         raise RuntimeError(
             "GEMINI_API_KEY가 없습니다. "
             "환경 변수로 설정하거나 config.py에서 설정하세요. "
             "발급: https://aistudio.google.com/apikey"
         )
-    genai.configure(api_key=GEMINI_API_KEY)
+    if _client is None:
+        _client = genai.Client(api_key=GEMINI_API_KEY)
+    return _client
 
 
 def summarize_article(article: dict, model_name: str = GEMINI_MODEL) -> str:
@@ -37,7 +42,6 @@ def summarize_article(article: dict, model_name: str = GEMINI_MODEL) -> str:
     기사 하나를 Gemini로 한국어 요약합니다.
     article: title, link, summary 등이 있는 딕셔너리
     """
-    _ensure_client()
     title = article.get("title", "")
     raw_summary = article.get("summary", "")
     summary_clean = _strip_html(raw_summary)
@@ -52,13 +56,13 @@ def summarize_article(article: dict, model_name: str = GEMINI_MODEL) -> str:
 {summary_clean[:4000]}
 """
 
-    fallback_models = [model_name, "gemini-2.0-flash", "gemini-1.5-flash"]
+    fallback_models = [model_name, "gemini-2.5-flash", "gemini-2.0-flash"]
     last_error = None
+    client = _get_client()
     for m in fallback_models:
         try:
-            model = genai.GenerativeModel(m)
-            response = model.generate_content(prompt)
-            if response.text:
+            response = client.models.generate_content(model=m, contents=prompt)
+            if response and response.text:
                 return response.text.strip()
         except Exception as e:
             last_error = e
@@ -76,7 +80,7 @@ def summarize_articles(
     각 기사에 summary_ko 필드를 추가한 새 리스트를 반환합니다.
     delay_seconds: API rate limit 방지용 대기 시간(초)
     """
-    _ensure_client()
+    _get_client()
     result = []
     for i, article in enumerate(articles):
         try:
@@ -160,7 +164,7 @@ def merge_and_summarize(
     failed_list = []
 
     if new_articles:
-        _ensure_client()
+        _get_client()
         for i, article in enumerate(new_articles):
             try:
                 summary_ko = summarize_article(article, model_name=model_name)
