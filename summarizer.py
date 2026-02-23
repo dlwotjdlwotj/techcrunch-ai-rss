@@ -52,11 +52,18 @@ def summarize_article(article: dict, model_name: str = GEMINI_MODEL) -> str:
 {summary_clean[:4000]}
 """
 
-    model = genai.GenerativeModel(model_name)
-    response = model.generate_content(prompt)
-    if not response.text:
-        return ""
-    return response.text.strip()
+    fallback_models = [model_name, "gemini-2.0-flash", "gemini-1.5-flash"]
+    last_error = None
+    for m in fallback_models:
+        try:
+            model = genai.GenerativeModel(m)
+            response = model.generate_content(prompt)
+            if response.text:
+                return response.text.strip()
+        except Exception as e:
+            last_error = e
+            continue
+    raise last_error or RuntimeError("요약 실패")
 
 
 def summarize_articles(

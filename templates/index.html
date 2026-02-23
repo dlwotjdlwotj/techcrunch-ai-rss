@@ -39,7 +39,9 @@
         {% else %}
             <div class="empty-state">
                 <p>📭 아직 수집된 기사가 없습니다.</p>
-                <p>먼저 <code>python run_with_summary.py</code>를 실행해서 기사를 수집하고 요약하세요.</p>
+                <p>방문 시 자동으로 업데이트가 시작됩니다. 2~3분 후 새로고침해 보세요.</p>
+                <p class="hint">Railway 배포 시 <code>GEMINI_API_KEY</code> 환경 변수를 설정했는지 확인하세요.</p>
+                <p><a href="/api/update-log" target="_blank">업데이트 로그 확인</a></p>
             </div>
         {% endif %}
     </main>

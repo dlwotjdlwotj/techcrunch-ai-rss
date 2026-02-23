@@ -36,11 +36,11 @@ def main():
     print(f"기존 요약: {len(existing)}개 / 이번 피드에서 새 글: {new_count}개")
 
     if new_count > 0:
-        print("Gemini API로 새 기사만 한국어 요약 중... (기사당 약 7초 간격, rate limit 방지)")
+        print("Gemini API로 새 기사만 한국어 요약 중... (기사당 약 3초 간격, rate limit 방지)")
     else:
         print("새 기사 없음. 기존 요약과 피드 순서만 반영합니다.")
     try:
-        merged, failed_list = merge_and_summarize(articles, existing, delay_seconds=7.0)
+        merged, failed_list = merge_and_summarize(articles, existing, delay_seconds=3.0)
         summary_path = save_summarized(merged)
     except Exception as e:
         print(f"오류: {e}", file=sys.stderr)

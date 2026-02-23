@@ -66,16 +66,24 @@ def _trigger_update_if_needed():
         return
     root = Path(__file__).resolve().parent
     lock_file = root / OUTPUT_DIR / "update_in_progress.lock"
+    log_file = root / OUTPUT_DIR / "update.log"
     lock_file.parent.mkdir(parents=True, exist_ok=True)
     try:
         lock_file.touch()
     except Exception:
         return
+    log_handle = None
+    try:
+        log_handle = open(log_file, "a", encoding="utf-8")
+        log_handle.write(f"\n--- {date.today().isoformat()} 업데이트 시작 ---\n")
+        log_handle.flush()
+    except Exception:
+        pass
     subprocess.Popen(
         [sys.executable, str(root / "scheduled_update.py")],
         cwd=str(root),
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
+        stdout=log_handle or subprocess.DEVNULL,
+        stderr=subprocess.STDOUT if log_handle else subprocess.DEVNULL,
         start_new_session=True,
     )
 
@@ -111,6 +119,22 @@ def article_detail(article_id):
         article = articles[article_id]
         return render_template("article.html", article=article, article_id=article_id)
     return "기사를 찾을 수 없습니다.", 404
+
+
+@app.route("/api/update-log")
+def update_log():
+    """최근 업데이트 로그 (디버깅용, 최근 8000자)"""
+    import html
+    root = Path(__file__).resolve().parent
+    log_file = root / OUTPUT_DIR / "update.log"
+    if not log_file.exists():
+        return "<pre>로그 없음</pre>", 200, {"Content-Type": "text/html; charset=utf-8"}
+    try:
+        content = log_file.read_text(encoding="utf-8")
+        excerpt = content[-8000:] if len(content) > 8000 else content
+        return f"<pre>{html.escape(excerpt)}</pre>", 200, {"Content-Type": "text/html; charset=utf-8"}
+    except Exception as e:
+        return f"<pre>오류: {html.escape(str(e))}</pre>", 200, {"Content-Type": "text/html; charset=utf-8"}
 
 
 @app.route("/api/trigger-update", methods=["GET", "POST"])

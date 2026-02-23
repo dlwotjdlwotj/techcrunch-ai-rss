@@ -42,7 +42,7 @@ PORT=8080 gunicorn -w 1 -b 0.0.0.0:8080 app:app
 
 - 저장소 연결 후 **빌드 명령**: `pip install -r requirements.txt`
 - **실행 명령**: `gunicorn -w 1 -b 0.0.0.0:$PORT app:app`
-- **환경 변수**: `GEMINI_API_KEY` 설정 (선택)
+- **환경 변수**: `GEMINI_API_KEY` 설정 (**필수** - 요약 기능용)
 - 루트에 **Procfile**이 있으면 그대로 사용 가능:
   ```
   web: gunicorn -w 1 -b 0.0.0.0:$PORT app:app
@@ -152,3 +152,9 @@ python3 scheduled_update.py
 
 - **PORT**: 환경 변수로 지정 (기본 5000). PaaS는 보통 자동으로 지정합니다.
 - **FLASK_DEBUG**: `true`로 두면 Flask 개발 서버처럼 디버그 모드로 동작합니다. 서버에서는 보통 설정하지 않습니다.
+
+## 7. 요약이 안 될 때 (Railway 등)
+
+- **GEMINI_API_KEY** 환경 변수가 Railway에 설정되어 있는지 확인하세요.
+- 사이트 접속 후 **2~3분** 기다린 뒤 새로고침하세요. (요약에 시간이 걸립니다)
+- `/api/update-log` 에서 업데이트 로그를 확인해 오류 메시지를 확인하세요.
