@@ -62,6 +62,20 @@ def article_detail(article_id):
     return "기사를 찾을 수 없습니다.", 404
 
 
+@app.route("/api/status")
+def api_status():
+    """디버깅용: CRON_SECRET 설정 여부, 로그 파일 존재 여부"""
+    root = Path(__file__).resolve().parent
+    log_file = root / OUTPUT_DIR / "update.log"
+    state_file = root / OUTPUT_DIR / "last_update_date.txt"
+    return {
+        "cron_secret_set": bool(os.environ.get("CRON_SECRET")),
+        "gemini_key_set": bool(os.environ.get("GEMINI_API_KEY")),
+        "log_exists": log_file.exists(),
+        "last_update_date": state_file.read_text(encoding="utf-8").strip() if state_file.exists() else None,
+    }
+
+
 @app.route("/api/update-log")
 def update_log():
     """최근 업데이트 로그 (디버깅용, 최근 8000자)"""
@@ -97,6 +111,9 @@ def trigger_update():
     log_handle = None
     try:
         log_handle = open(log_file, "a", encoding="utf-8")
+        from datetime import datetime
+        log_handle.write(f"\n--- 트리거 호출: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} ---\n")
+        log_handle.flush()
     except Exception:
         pass
     subprocess.Popen(
